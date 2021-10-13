@@ -2,7 +2,6 @@ import os
 import logging
 import shutil
 import jsonpickle
-from distutils.file_util import copy_file
 from distutils.dir_util import copy_tree, mkpath
 from ebbs import Builder
 
@@ -29,7 +28,7 @@ class wordpress_plugin(Builder):
         copy_tree(self.incPath, os.path.join(self.buildPath,"inc"))
         os.chdir(self.buildPath)
         self.WriteMainFile()
-        os.chdir(os.path.join(self.rootPath)
+        os.chdir(os.path.join(self.rootPath))
         shutil.make_archive(self.projectName, 'zip', self.buildPath)
         logging.info("Complete!")
 
