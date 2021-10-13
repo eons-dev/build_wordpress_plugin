@@ -21,7 +21,6 @@ class wordpress_plugin(Builder):
             logging.info(f"DELETING {self.buildPath}")
             shutil.rmtree(self.buildPath)
 
-        self.buildPath = os.path.abspath(os.path.join(self.buildPath, self.projectName))
         logging.info(f"Using build path {self.buildPath}")
         mkpath(self.buildPath)
         mkpath(os.path.join(self.buildPath,"inc"))
