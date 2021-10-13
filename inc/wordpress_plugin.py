@@ -28,8 +28,6 @@ class wordpress_plugin(Builder):
         copy_tree(self.incPath, os.path.join(self.buildPath,"inc"))
         os.chdir(self.buildPath)
         self.WriteMainFile()
-        os.chdir(os.path.join(self.rootPath))
-        shutil.make_archive(self.projectName, 'zip', self.buildPath)
         logging.info("Complete!")
 
     def WriteMainFile(self):
