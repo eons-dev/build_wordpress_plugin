@@ -2,30 +2,42 @@ import os
 import logging
 import shutil
 import jsonpickle
-from distutils.dir_util import copy_tree, mkpath
+from pathlib import Path
 from ebbs import Builder
 
 class wordpress_plugin(Builder):
     def __init__(self, name="Wordpress Plugin Builder"):
         super().__init__(name)
-    
+
+        self.clearBuildPath = True
+
         self.supportedProjectTypes.append("plugin")
+
+        self.optionalKWArgs["plugin_name"] = None
+        self.optionalKWArgs["description"] = None
+        self.optionalKWArgs["version"] = "0.0.0"
+        self.optionalKWArgs["author"] = "Web Infrastructure"
+        self.optionalKWArgs["author_uri"] = "https://web.infrastructure.tech"
+        self.optionalKWArgs["license"] = "MIT License"
 
     #Required Builder method. See that class for details.
     def Build(self):
-        #get config info
-        config_file = open(os.path.join(self.rootPath, "config.json"), "r")
-        self.config = jsonpickle.decode(config_file.read())
 
-        if os.path.exists(self.buildPath):
-            logging.info(f"DELETING {self.buildPath}")
-            shutil.rmtree(self.buildPath)
+        if (self.plugin_name is None):
+            self.plugin_name = self.projectName
 
-        logging.info(f"Using build path {self.buildPath}")
-        mkpath(self.buildPath)
-        mkpath(os.path.join(self.buildPath,"inc"))
-        copy_tree(self.incPath, os.path.join(self.buildPath,"inc"))
-        os.chdir(self.buildPath)
+        if (self.description is None):
+            self.description = f"Code for {self.projectName}"
+
+        self.targetIncPath = os.path.join(self.buildPath, "inc")
+        Path(self.targetIncPath).mkdir(parents=True, exist_ok=True)
+        try:
+            shutil.copytree(self.incPath, self.targetIncPath)
+        except shutil.Error as exc:
+            errors = exc.args[0]
+            for error in errors:
+                src, dst, msg = error
+                logging.debug(f"{msg}")
         self.WriteMainFile()
         logging.info("Complete!")
 
@@ -35,30 +47,30 @@ class wordpress_plugin(Builder):
         main_file.write(
 f'''<?php
 /*
-Plugin Name: {self.config["Plugin Name"]}
-Description: {self.config["Description"]}
-Version: {self.config["Version"]}
-Author: {self.config["Author"]}
-Author URI: {self.config["Author URI"]}
-License: {self.config["License"]}
+Plugin Name: {self.plugin_name}
+Description: {self.description}
+Version: {self.version}
+Author: {self.author}
+Author URI: {self.author_uri}
+License: {self.license}
 */
 
-function rglob($pattern, $flags = 0)
+function {self.projectName}_rglob($pattern, $flags = 0)
 {{
     $files = glob($pattern, $flags); 
     foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir)
     {{
-        $files = array_merge($files, rglob($dir.'/'.basename($pattern), $flags));
+        $files = array_merge($files, {self.projectName}_rglob($dir.'/'.basename($pattern), $flags));
     }}
     return $files;
 }}
-function require_all()
+function {self.projectName}_require_all()
 {{
-    foreach (rglob(dirname(__FILE__) . "/inc/*.php") as $filename)
+    foreach ({self.projectName}_rglob(dirname(__FILE__) . "/inc/*.php") as $filename)
     {{
         require_once($filename);
     }}
 }}
-add_action('init', 'require_all');
+add_action('init', '{self.projectName}_require_all');
 ''')
         main_file.close()
