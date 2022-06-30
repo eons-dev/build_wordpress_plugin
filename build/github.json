@@ -1,5 +1,5 @@
 {
-  "name" : "cloudflare_update",
+  "name" : "wordpress_plugin",
   "type" : "build",
   "build_in" : "github",
   "clear_build_path" : true,
