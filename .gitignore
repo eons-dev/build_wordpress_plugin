@@ -1,1 +1,7 @@
-/generated/
+#build
+build/**/
+/local/
+build.json
+
+#intellij
+/.idea/
